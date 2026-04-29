@@ -62,11 +62,31 @@ namespace
 
         std::vector<char const *> extensions(ext_names, ext_names + ext_count);
 
+#if defined(__APPLE__)
+        bool has_portability_enumeration = false;
+        for (char const *ext : extensions)
+        {
+            if (ext != nullptr && std::string(ext) == VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)
+            {
+                has_portability_enumeration = true;
+                break;
+            }
+        }
+        if (!has_portability_enumeration)
+        {
+            extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+        }
+#endif
+
         VkInstanceCreateInfo create_info{};
         create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         create_info.pApplicationInfo = &app_info;
         create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         create_info.ppEnabledExtensionNames = extensions.data();
+
+#if defined(__APPLE__)
+        create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 
         VkResult result = vkCreateInstance(&create_info, nullptr, &impl->vk_instance);
         if (result != VK_SUCCESS)
